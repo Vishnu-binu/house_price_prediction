@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HousePredict | Price Estimator</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<header class="navbar">
+    <a class="brand" href="{{ url_for('home') }}">
+        <span class="brand-icon">⌂</span>
+        <span>HousePredict</span>
+    </a>
+    <span class="nav-tag">AI PROPERTY ESTIMATOR</span>
+</header>
+
+<main class="container">
+    <section class="hero">
+        <div class="hero-badge">✦ SMART REAL ESTATE</div>
+        <h1>Find Your Home's <span>Estimated Value</span></h1>
+        <p>Adjust the location sliders, enter property details, and get an instant estimate.</p>
+    </section>
+
+    {% if error %}
+    <div class="alert" role="alert">
+        <strong>Unable to predict</strong>
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    {% if prediction is not none %}
+    <section class="result-card">
+        <div class="result-heading">
+            <div class="result-icon">✓</div>
+            <div>
+                <p class="eyebrow">YOUR ESTIMATED VALUE</p>
+                <h2>Prediction complete</h2>
+            </div>
+        </div>
+
+        <div class="price">${{ "{:,.2f}".format(prediction) }}</div>
+        <p class="result-caption">Estimated median house value · USD</p>
+
+        <div class="category-line">
+            <span>Price category</span>
+            <span class="category-badge
+                {% if category == 'Low' %}low
+                {% elif category == 'Medium' %}medium
+                {% else %}high{% endif %}">
+                {{ category }}
+            </span>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="form-card">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">PROPERTY DETAILS</p>
+                <h2>Configure your property</h2>
+            </div>
+            <span class="field-count">6 inputs</span>
+        </div>
+
+        <form action="{{ url_for('predict') }}" method="POST">
+
+            <div class="location-panel">
+                <div class="location-title">
+                    <div>
+                        <p class="eyebrow">LOCATION SETTINGS</p>
+                        <h3>Where is the property?</h3>
+                    </div>
+                    <span class="location-symbol">⌖</span>
+                </div>
+
+                <p class="helper-text">
+                    Move each slider to set the approximate geographic coordinates.
+                </p>
+
+                <div class="slider-grid">
+                    <div class="slider-field">
+                        <div class="slider-top">
+                            <label for="latitude">Latitude</label>
+                            <output id="latitude-value">
+                                {{ form_data.get('latitude', '37.88') }}
+                            </output>
+                        </div>
+                        <input
+                            type="range"
+                            id="latitude"
+                            name="latitude"
+                            min="32.54"
+                            max="41.95"
+                            step="0.01"
+                            value="{{ form_data.get('latitude', '37.88') }}"
+                            oninput="document.getElementById('latitude-value').value = Number(this.value).toFixed(2)"
+                        >
+                        <div class="range-labels">
+                            <span>32.54</span>
+                            <span>41.95</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-top">
+                            <label for="longitude">Longitude</label>
+                            <output id="longitude-value">
+                                {{ form_data.get('longitude', '-122.23') }}
+                            </output>
+                        </div>
+                        <input
+                            type="range"
+                            id="longitude"
+                            name="longitude"
+                            min="-124.35"
+                            max="-114.31"
+                            step="0.01"
+                            value="{{ form_data.get('longitude', '-122.23') }}"
+                            oninput="document.getElementById('longitude-value').value = Number(this.value).toFixed(2)"
+                        >
+                        <div class="range-labels">
+                            <span>-124.35</span>
+                            <span>-114.31</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="field">
+                    <label for="housing_median_age">Housing Median Age</label>
+                    <span class="field-help">Years · Range 1–52</span>
+                    <input
+                        type="number"
+                        id="housing_median_age"
+                        name="housing_median_age"
+                        min="1" max="52" step="1" required
+                        value="{{ form_data.get('housing_median_age', '') }}"
+                        placeholder="e.g. 25"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="total_rooms">Total Rooms</label>
+                    <span class="field-help">Range 2–39,320</span>
+                    <input
+                        type="number"
+                        id="total_rooms"
+                        name="total_rooms"
+                        min="2" max="39320" step="1" required
+                        value="{{ form_data.get('total_rooms', '') }}"
+                        placeholder="e.g. 1500"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="total_bedrooms">Total Bedrooms</label>
+                    <span class="field-help">Range 1–6,445</span>
+                    <input
+                        type="number"
+                        id="total_bedrooms"
+                        name="total_bedrooms"
+                        min="1" max="6445" step="1" required
+                        value="{{ form_data.get('total_bedrooms', '') }}"
+                        placeholder="e.g. 300"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="households">Households</label>
+                    <span class="field-help">Range 1–6,082</span>
+                    <input
+                        type="number"
+                        id="households"
+                        name="households"
+                        min="1" max="6082" step="1" required
+                        value="{{ form_data.get('households', '') }}"
+                        placeholder="e.g. 250"
+                    >
+                </div>
+
+                <div class="field full-width">
+                    <label for="ocean_proximity">Ocean Proximity</label>
+                    <span class="field-help">Select the property's location category</span>
+                    <select id="ocean_proximity" name="ocean_proximity" required>
+                        <option value="">Choose a location</option>
+                        {% for option in ocean_options %}
+                        <option value="{{ option }}"
+                            {% if form_data.get('ocean_proximity', '') == option %}
+                            selected
+                            {% endif %}>
+                            {{ option }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="predict-button">
+                <span>Estimate House Price</span>
+                <span aria-hidden="true">→</span>
+            </button>
+
+            <p class="form-note">
+                Prediction is an estimate based on the trained dataset.
+            </p>
+        </form>
+    </section>
+
+    <section class="performance">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">MODEL INSIGHTS</p>
+                <h2>Model performance</h2>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <article class="metric-card">
+                <span class="metric-label">Selected model</span>
+                <h3 class="model-name">{{ model_name }}</h3>
+                <p>Regression algorithm</p>
+            </article>
+
+            <article class="metric-card">
+                <span class="metric-label">Test R² score</span>
+                <h3>
+                    {% if r2_score_value is not none %}
+                    {{ "%.2f"|format(r2_score_value * 100) }}%
+                    {% else %}N/A{% endif %}
+                </h3>
+                <p>Regression evaluation</p>
+            </article>
+
+            <article class="metric-card">
+                <span class="metric-label">Category accuracy</span>
+                <h3>
+                    {% if accuracy is not none %}
+                    {{ "%.2f"|format(accuracy * 100) }}%
+                    {% else %}N/A{% endif %}
+                </h3>
+                <p>Low / Medium / High classification</p>
+            </article>
+        </div>
+
+        <div class="confusion-card">
+            <h3>Confusion Matrix</h3>
+            <p>Actual versus predicted price categories on test data.</p>
+            {% if accuracy is not none %}
+            <img
+                src="{{ url_for('static', filename='confusion_matrix.png') }}"
+                alt="Classification confusion matrix"
+                class="confusion-image"
+            >
+            {% else %}
+            <p>Run model training to generate this chart.</p>
+            {% endif %}
+        </div>
+
+        <p class="disclaimer">
+            R² score and classification accuracy measure different tasks.
+            Neither guarantees an exact price for an individual property.
+        </p>
+    </section>
+
+    <footer>
+        <strong>HousePredict</strong>
+        <p>House Price Prediction Using Machine Learning · Values in USD</p>
+    </footer>
+</main>
+</body>
+</html>
